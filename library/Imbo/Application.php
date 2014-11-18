@@ -116,6 +116,7 @@ class Application {
             'Imbo\Resource\ShortUrls',
             'Imbo\Resource\ShortUrl',
             'Imbo\Resource\User',
+            'Imbo\Resource\GlobalImages',
             'Imbo\Resource\Images',
             'Imbo\Resource\Image',
             'Imbo\Resource\Metadata',

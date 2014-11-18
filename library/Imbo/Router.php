@@ -46,6 +46,7 @@ class Router {
         'globalshorturl' => '#^/s/(?<shortUrlId>[a-zA-Z0-9]{7})$#',
         'status'         => '#^/status(/|(\.(?<extension>json|xml)))?$#',
         'images'         => '#^/users/(?<publicKey>[a-z0-9_-]{3,})/images(/|(\.(?<extension>json|xml)))?$#',
+        'globalimages'   => '#^/images(/|(\.(?<extension>json|xml)))?$#',
         'metadata'       => '#^/users/(?<publicKey>[a-z0-9_-]{3,})/images/(?<imageIdentifier>[a-f0-9]{32})/meta(?:data)?(/|\.(?<extension>json|xml))?$#',
         'user'           => '#^/users/(?<publicKey>[a-z0-9_-]{3,})(/|\.(?<extension>json|xml))?$#',
         'stats'          => '#^/stats(/|(\.(?<extension>json|xml)))?$#',
