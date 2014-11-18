@@ -210,7 +210,7 @@ class DatabaseOperationsTest extends ListenerTests {
         $imagesQuery = $this->getMock('Imbo\Resource\Images\Query');
         $this->listener->setImagesQuery($imagesQuery);
 
-        $this->database->expects($this->once())->method('getImages')->with($this->publicKey, $imagesQuery)->will($this->returnValue($images));
+        $this->database->expects($this->once())->method('getImages')->with([$this->publicKey], $imagesQuery)->will($this->returnValue($images));
         $this->database->expects($this->once())->method('getLastModified')->with($this->publicKey)->will($this->returnValue($date));
 
         $this->response->expects($this->once())->method('setModel')->with($this->isInstanceOf('Imbo\Model\Images'))->will($this->returnSelf());

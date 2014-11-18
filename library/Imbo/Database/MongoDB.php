@@ -241,13 +241,13 @@ class MongoDB implements DatabaseInterface {
     /**
      * {@inheritdoc}
      */
-    public function getImages($publicKey, Query $query, Images $model) {
+    public function getImages(array $publicKeys, Query $query, Images $model) {
         // Initialize return value
         $images = [];
 
         // Query data
         $queryData = [
-            'publicKey' => $publicKey,
+            'publicKey' => ['$in' => $publicKeys],
         ];
 
         $from = $query->from();
