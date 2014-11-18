@@ -230,13 +230,23 @@ class Doctrine implements DatabaseInterface {
     /**
      * {@inheritdoc}
      */
-    public function getImages($publicKey, Query $query, Images $model) {
+    public function getImages(array $publicKeys, Query $query, Images $model) {
         $images = array();
 
         $qb = $this->getConnection()->createQueryBuilder();
         $qb->select('*')
-           ->from($this->tableNames['imageinfo'], 'i')
-           ->where('i.publicKey = :publicKey')->setParameter(':publicKey', $publicKey);
+           ->from($this->tableNames['imageinfo'], 'i');
+
+        // Filter on public keys
+        $expr = $qb->expr();
+        $composite = $expr->orX();
+
+        foreach ($publicKeys as $i => $publicKey) {
+            $composite->add($expr->eq('i.publicKey', ':publicKey' . $i));
+            $qb->setParameter(':publicKey' . $i, $publicKey);
+        }
+
+        $qb->where($composite);
 
         if ($sort = $query->sort()) {
             // Fields valid for sorting

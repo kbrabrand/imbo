@@ -235,7 +235,7 @@ class DatabaseOperations implements ListenerInterface {
         $model->setLimit($query->limit())
               ->setPage($query->page());
 
-        $images = $database->getImages($publicKey, $query, $model);
+        $images = $database->getImages([$publicKey], $query, $model);
         $modelImages = array();
 
         foreach ($images as $image) {
