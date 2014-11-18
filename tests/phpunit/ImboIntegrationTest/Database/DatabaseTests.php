@@ -85,12 +85,12 @@ abstract class DatabaseTests extends \PHPUnit_Framework_TestCase {
         $image = $this->getImage();
 
         $this->assertTrue($this->adapter->insertImage($publicKey, $imageIdentifier, $image));
-        $lastModified1 = $this->adapter->getLastModified($publicKey, $imageIdentifier);
+        $lastModified1 = $this->adapter->getLastModified([$publicKey], $imageIdentifier);
 
         sleep(1);
 
         $this->assertTrue($this->adapter->insertImage($publicKey, $imageIdentifier, $image));
-        $lastModified2 = $this->adapter->getLastModified($publicKey, $imageIdentifier);
+        $lastModified2 = $this->adapter->getLastModified([$publicKey], $imageIdentifier);
 
         $this->assertTrue($lastModified2 > $lastModified1);
     }
@@ -134,7 +134,7 @@ abstract class DatabaseTests extends \PHPUnit_Framework_TestCase {
      * @expectedExceptionMessage Image not found
      */
     public function testGetLastModifiedOfImageThatDoesNotExist() {
-        $this->adapter->getLastModified('publickey', 'id');
+        $this->adapter->getLastModified(['publickey'], 'id');
     }
 
     public function testGetLastModified() {
@@ -143,11 +143,11 @@ abstract class DatabaseTests extends \PHPUnit_Framework_TestCase {
         $image = $this->getImage();
 
         $this->assertTrue($this->adapter->insertImage($publicKey, $imageIdentifier, $image));
-        $this->assertInstanceOf('DateTime', $this->adapter->getLastModified($publicKey, $imageIdentifier));
+        $this->assertInstanceOf('DateTime', $this->adapter->getLastModified([$publicKey], $imageIdentifier));
     }
 
     public function testGetLastModifiedWhenUserHasNoImages() {
-        $this->assertInstanceOf('DateTime', $this->adapter->getLastModified('publickey'));
+        $this->assertInstanceOf('DateTime', $this->adapter->getLastModified(['publickey']));
     }
 
     public function testGetNumImages() {

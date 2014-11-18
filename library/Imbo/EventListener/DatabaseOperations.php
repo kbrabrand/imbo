@@ -160,7 +160,7 @@ class DatabaseOperations implements ListenerInterface {
         $model->setData($database->getMetadata($publicKey, $imageIdentifier));
 
         $response->setModel($model)
-                 ->setLastModified($database->getLastModified($publicKey, $imageIdentifier));
+                 ->setLastModified($database->getLastModified([$publicKey], $imageIdentifier));
     }
 
     /**
@@ -226,7 +226,7 @@ class DatabaseOperations implements ListenerInterface {
             }
         }
 
-        $publicKey = $event->getRequest()->getPublicKey();
+        $publicKeys = $event->getArgument('publicKeys');
         $response = $event->getResponse();
         $database = $event->getDatabase();
 
@@ -235,7 +235,7 @@ class DatabaseOperations implements ListenerInterface {
         $model->setLimit($query->limit())
               ->setPage($query->page());
 
-        $images = $database->getImages([$publicKey], $query, $model);
+        $images = $database->getImages($publicKeys, $query, $model);
         $modelImages = array();
 
         foreach ($images as $image) {
@@ -243,7 +243,7 @@ class DatabaseOperations implements ListenerInterface {
             $entry->setFilesize($image['size'])
                   ->setWidth($image['width'])
                   ->setHeight($image['height'])
-                  ->setPublicKey($publicKey)
+                  ->setPublicKey($image['publicKey'])
                   ->setImageIdentifier($image['imageIdentifier'])
                   ->setChecksum($image['checksum'])
                   ->setOriginalChecksum(isset($image['originalChecksum']) ? $image['originalChecksum'] : null)
@@ -270,7 +270,7 @@ class DatabaseOperations implements ListenerInterface {
             }
         }
 
-        $lastModified = $database->getLastModified($publicKey);
+        $lastModified = $database->getLastModified($publicKeys);
 
         $response->setModel($model)
                  ->setLastModified($lastModified);
@@ -288,7 +288,7 @@ class DatabaseOperations implements ListenerInterface {
         $database = $event->getDatabase();
 
         $numImages = $database->getNumImages($publicKey);
-        $lastModified = $database->getLastModified($publicKey);
+        $lastModified = $database->getLastModified([$publicKey]);
 
         $userModel = new Model\User();
         $userModel->setPublicKey($publicKey)

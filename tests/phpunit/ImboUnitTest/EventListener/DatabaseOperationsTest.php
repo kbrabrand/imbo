@@ -54,6 +54,15 @@ class DatabaseOperationsTest extends ListenerTests {
         $this->event->expects($this->any())->method('getDatabase')->will($this->returnValue($this->database));
         $this->event->expects($this->any())->method('getUserLookup')->will($this->returnValue($this->userLookup));
 
+        $publicKey = $this->publicKey;
+        $this->event->expects($this->any())->method('getArgument')->will($this->returnCallback(function($arg) use ($publicKey) {
+            if ($arg === 'publicKeys') {
+                return [$publicKey];
+            } else if ($arg === 'metadata') {
+                return ['key' => 'value'];
+            }
+        }));
+
         $this->listener = new DatabaseOperations();
     }
 
@@ -119,7 +128,6 @@ class DatabaseOperationsTest extends ListenerTests {
      * @covers Imbo\EventListener\DatabaseOperations::updateMetadata
      */
     public function testCanUpdateMetadata() {
-        $this->event->expects($this->once())->method('getArgument')->with('metadata')->will($this->returnValue(array('key' => 'value')));
         $this->database->expects($this->once())->method('updateMetadata')->with($this->publicKey, $this->imageIdentifier, array('key' => 'value'));
 
         $this->listener->updateMetadata($this->event);
@@ -131,7 +139,7 @@ class DatabaseOperationsTest extends ListenerTests {
     public function testCanLoadMetadata() {
         $date = new DateTime();
         $this->database->expects($this->once())->method('getMetadata')->with($this->publicKey, $this->imageIdentifier)->will($this->returnValue(array('key' => 'value')));
-        $this->database->expects($this->once())->method('getLastModified')->with($this->publicKey, $this->imageIdentifier)->will($this->returnValue($date));
+        $this->database->expects($this->once())->method('getLastModified')->with([$this->publicKey], $this->imageIdentifier)->will($this->returnValue($date));
         $this->response->expects($this->once())->method('setModel')->with($this->isInstanceOf('Imbo\Model\Metadata'))->will($this->returnSelf());
         $this->response->expects($this->once())->method('setLastModified')->with($date);
 
@@ -150,6 +158,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 50,
                 'height' => 50,
                 'imageIdentifier' => 'identifier1',
+                'publicKey' => $this->publicKey,
                 'checksum' => 'checksum1',
                 'originalChecksum' => 'checksum1',
                 'mime' => 'image/png',
@@ -163,6 +172,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 60,
                 'height' => 60,
                 'imageIdentifier' => 'identifier2',
+                'publicKey' => $this->publicKey,
                 'checksum' => 'checksum2',
                 'originalChecksum' => 'checksum2',
                 'mime' => 'image/png',
@@ -176,6 +186,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 70,
                 'height' => 70,
                 'imageIdentifier' => 'identifier3',
+                'publicKey' => $this->publicKey,
                 'checksum' => 'checksum3',
                 'originalChecksum' => 'checksum3',
                 'mime' => 'image/png',
@@ -211,7 +222,7 @@ class DatabaseOperationsTest extends ListenerTests {
         $this->listener->setImagesQuery($imagesQuery);
 
         $this->database->expects($this->once())->method('getImages')->with([$this->publicKey], $imagesQuery)->will($this->returnValue($images));
-        $this->database->expects($this->once())->method('getLastModified')->with($this->publicKey)->will($this->returnValue($date));
+        $this->database->expects($this->once())->method('getLastModified')->with([$this->publicKey])->will($this->returnValue($date));
 
         $this->response->expects($this->once())->method('setModel')->with($this->isInstanceOf('Imbo\Model\Images'))->will($this->returnSelf());
         $this->response->expects($this->once())->method('setLastModified')->with($date);
@@ -226,7 +237,7 @@ class DatabaseOperationsTest extends ListenerTests {
     public function testCanLoadUser() {
         $date = new DateTime();
         $this->database->expects($this->once())->method('getNumImages')->with($this->publicKey)->will($this->returnValue(123));
-        $this->database->expects($this->once())->method('getLastModified')->with($this->publicKey)->will($this->returnValue($date));
+        $this->database->expects($this->once())->method('getLastModified')->with([$this->publicKey])->will($this->returnValue($date));
         $this->response->expects($this->once())->method('setModel')->with($this->isInstanceOf('Imbo\Model\User'))->will($this->returnSelf());
         $this->response->expects($this->once())->method('setLastModified')->with($date);
 
