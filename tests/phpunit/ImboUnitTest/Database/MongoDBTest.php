@@ -214,7 +214,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
                               ->method('find')
                               ->will($this->throwException(new MongoException()));
 
-        $this->driver->getLastModified('key');
+        $this->driver->getLastModified(['key']);
     }
 
     /**

@@ -54,7 +54,9 @@ class Images implements ResourceInterface {
      * @param EventInterface $event The current event
      */
     public function getImages(EventInterface $event) {
-        $event->getManager()->trigger('db.images.load');
+        $event->getManager()->trigger('db.images.load', [
+            'publicKeys' => [$event->getRequest()->getPublicKey()]
+        ]);
     }
 
     /**

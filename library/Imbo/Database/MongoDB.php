@@ -363,10 +363,10 @@ class MongoDB implements DatabaseInterface {
     /**
      * {@inheritdoc}
      */
-    public function getLastModified($publicKey, $imageIdentifier = null) {
+    public function getLastModified(array $publicKeys, $imageIdentifier = null) {
         try {
-            // Query on the public key
-            $query = ['publicKey' => $publicKey];
+            // Query on the public keys
+            $query = ['publicKey' => ['$in' => $publicKeys]];
 
             if ($imageIdentifier) {
                 // We want information about a single image. Add the identifier to the query

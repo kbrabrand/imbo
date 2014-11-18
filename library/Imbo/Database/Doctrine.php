@@ -402,12 +402,21 @@ class Doctrine implements DatabaseInterface {
     /**
      * {@inheritdoc}
      */
-    public function getLastModified($publicKey, $imageIdentifier = null) {
+    public function getLastModified(array $publicKeys, $imageIdentifier = null) {
         $query = $this->getConnection()->createQueryBuilder();
         $query->select('updated')
-              ->from($this->tableNames['imageinfo'], 'i')
-              ->where('i.publicKey = :publicKey')
-              ->setParameter(':publicKey', $publicKey);
+              ->from($this->tableNames['imageinfo'], 'i');
+
+        // Filter on public keys
+        $expr = $query->expr();
+        $composite = $expr->orX();
+
+        foreach ($publicKeys as $i => $publicKey) {
+            $composite->add($expr->eq('i.publicKey', ':publicKey' . $i));
+            $query->setParameter(':publicKey' . $i, $publicKey);
+        }
+
+        $query->where($composite);
 
         if ($imageIdentifier) {
             $query->andWhere('i.imageIdentifier = :imageIdentifier')
