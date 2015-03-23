@@ -22,7 +22,6 @@ use Imbo\EventManager\EventInterface,
  * page     => Page number. Defaults to 1
  * limit    => Limit to a number of images pr. page. Defaults to 20
  * metadata => Whether or not to include metadata pr. image. Set to 1 to enable
- * query    => urlencoded json data to use in the query
  * from     => Unix timestamp to fetch from
  * to       => Unit timestamp to fetch to
  *
@@ -34,18 +33,17 @@ class GlobalImages implements ResourceInterface {
      * {@inheritdoc}
      */
     public function getAllowedMethods() {
-        return array('GET', 'HEAD', 'SEARCH');
+        return ['GET', 'HEAD'];
     }
 
     /**
      * {@inheritdoc}
      */
     public static function getSubscribedEvents() {
-        return array(
+        return [
             'globalimages.get'    => 'getImages',
             'globalimages.head'   => 'getImages',
-            'globalimages.search' => 'searchImages',
-        );
+        ];
     }
 
     /**
