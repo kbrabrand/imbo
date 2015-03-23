@@ -104,14 +104,43 @@ class ImboContext extends RESTContext {
     }
 
     /**
+     * @Given /^I do not specify a public and private key$/
+     */
+    public function removeClientAuth() {
+        $this->publicKey = null;
+        $this->privateKey = null;
+    }
+
+    /**
+     * @Given /^I authenticate using "(.*?)"$/
+     */
+    public function authenticateRequest($method) {
+        if ($method == 'access-token') {
+            return new Given('I include an access token in the query');
+        }
+
+        if ($method == 'signature') {
+            return new Given('I sign the request');
+        }
+
+        throw new \Exception('Unknown authentication method: ' . $method);
+    }
+
+    /**
      * @Given /^I include an access token in the query$/
      */
     public function appendAccessToken() {
         $this->client->getEventDispatcher()->addListener('request.before_send', function($event) {
             $request = $event['request'];
-            $request->getQuery()->remove('accessToken');
+            $query = $request->getQuery();
+
+            if (!$query->get('publicKey')) {
+                $query->set('publicKey', $this->publicKey);
+            }
+
+            $query->remove('accessToken');
             $accessToken = hash_hmac('sha256', urldecode($request->getUrl()), $this->privateKey);
-            $request->getQuery()->set('accessToken', $accessToken);
+            $query->set('accessToken', $accessToken);
         }, -100);
     }
 
@@ -351,5 +380,32 @@ class ImboContext extends RESTContext {
             new Given('the "Accept" request header is "image/*"'),
             new Given('I request "/s/' . $shortUrlId . '"'),
         );
+    }
+
+    /**
+     * @Given /^I prime the database with "([^"]*)"$/
+     */
+    public function iPrimeTheAccessControlProviderWith($fixture)
+    {
+        $fixturePath = implode(DIRECTORY_SEPARATOR, [
+            dirname(__DIR__),
+            'fixtures',
+            $fixture
+        ]);
+
+        if (!$fixturePath = realpath($fixturePath)) {
+            throw new RuntimeException('Path "' . $fixturePath . '" is invalid');
+        }
+
+        $mongo = (new MongoClient())->imbo_testing;
+
+        $fixtures = require $fixturePath;
+        foreach ($fixtures as $collection => $data) {
+            $mongo->$collection->drop();
+
+            if (!!$data) {
+                $mongo->$collection->batchInsert($data);
+            }
+        }
     }
 }

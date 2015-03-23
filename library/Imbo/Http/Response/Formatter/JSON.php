@@ -63,7 +63,7 @@ class JSON extends Formatter implements FormatterInterface {
      */
     public function formatUser(Model\User $model) {
         return $this->encode(array(
-            'publicKey' => $model->getPublicKey(),
+            'id' => $model->getUserId(),
             'numImages' => $model->getNumImages(),
             'lastModified' => $this->dateFormatter->formatDate($model->getLastModified()),
         ));
@@ -93,7 +93,7 @@ class JSON extends Formatter implements FormatterInterface {
                 'height' => $image->getHeight(),
                 'mime' => $image->getMimeType(),
                 'imageIdentifier' => $image->getImageIdentifier(),
-                'publicKey' => $image->getPublicKey(),
+                'user' => $image->getUser(),
             );
 
             // Add metadata if the field is to be displayed
@@ -151,6 +151,34 @@ class JSON extends Formatter implements FormatterInterface {
      */
     public function formatListModel(Model\ListModel $model) {
         return $this->encode(array($model->getContainer() => $model->getList()));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function formatGroups(Model\Groups $model) {
+        return $this->encode($model->getData());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function formatGroup(Model\Group $model) {
+        return $this->encode($model->getData());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function formatAccessRule(Model\AccessRule $model) {
+        return $this->encode($model->getData());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function formatAccessRules(Model\AccessRules $model) {
+        return $this->encode($model->getData());
     }
 
     /**
