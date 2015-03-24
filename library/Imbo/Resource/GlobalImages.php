@@ -52,20 +52,20 @@ class GlobalImages implements ResourceInterface {
      * @param EventInterface $event The current event
      */
     public function getImages(EventInterface $event) {
+        $acl = $event->getAccessControl();
+
+        // Get intersection between specified users and users which
+        // the public key has access to the given endpoint for
+        $users = array_intersect(
+            $event->getRequest()->getUsers(),
+            $acl->getUsersForResource(
+                $event->getRequest()->getPublicKey(),
+                'images.get'
+            )
+        );
+
         $event->getManager()->trigger('db.images.load', [
-            'publicKeys' => $event->getUserLookup()->getPublicKeys()
+            'users' => $users
         ]);
     }
-
-    /**
-     * Handle SEARCH requests
-     *
-     * @param EventInterface
-     */
-    public function searchImages(EventInterface $event) {
-        $event->getManager()->trigger('db.images.load', [
-            'publicKeys' => $event->getUserLookup()->getPublicKeys()
-        ]);
-    }
-
 }

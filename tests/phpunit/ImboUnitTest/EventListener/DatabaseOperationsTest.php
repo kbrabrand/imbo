@@ -46,6 +46,7 @@ class DatabaseOperationsTest extends ListenerTests {
         $this->image = $this->getMock('Imbo\Model\Image');
 
         $this->request->expects($this->any())->method('getUser')->will($this->returnValue($this->user));
+        $this->request->expects($this->any())->method('getUsers')->will($this->returnValue([$this->user]));
         $this->request->expects($this->any())->method('getImageIdentifier')->will($this->returnValue($this->imageIdentifier));
 
         $this->event = $this->getMock('Imbo\EventManager\Event');
@@ -54,10 +55,10 @@ class DatabaseOperationsTest extends ListenerTests {
         $this->event->expects($this->any())->method('getDatabase')->will($this->returnValue($this->database));
         $this->event->expects($this->any())->method('getAccessControl')->will($this->returnValue($this->accessControl));
 
-        $publicKey = $this->publicKey;
-        $this->event->expects($this->any())->method('getArgument')->will($this->returnCallback(function($arg) use ($publicKey) {
-            if ($arg === 'publicKeys') {
-                return [$publicKey];
+        $user = $this->user;
+        $this->event->expects($this->any())->method('getArgument')->will($this->returnCallback(function($arg) use ($user) {
+            if ($arg === 'user') {
+                return [$user];
             } else if ($arg === 'metadata') {
                 return ['key' => 'value'];
             }
@@ -159,7 +160,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 50,
                 'height' => 50,
                 'imageIdentifier' => 'identifier1',
-                'publicKey' => $this->publicKey,
+                'user' => $this->user,
                 'checksum' => 'checksum1',
                 'originalChecksum' => 'checksum1',
                 'mime' => 'image/png',
@@ -173,7 +174,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 60,
                 'height' => 60,
                 'imageIdentifier' => 'identifier2',
-                'publicKey' => $this->publicKey,
+                'user' => $this->user,
                 'checksum' => 'checksum2',
                 'originalChecksum' => 'checksum2',
                 'mime' => 'image/png',
@@ -187,7 +188,7 @@ class DatabaseOperationsTest extends ListenerTests {
                 'width' => 70,
                 'height' => 70,
                 'imageIdentifier' => 'identifier3',
-                'publicKey' => $this->publicKey,
+                'user' => $this->user,
                 'checksum' => 'checksum3',
                 'originalChecksum' => 'checksum3',
                 'mime' => 'image/png',

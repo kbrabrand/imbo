@@ -226,7 +226,12 @@ class DatabaseOperations implements ListenerInterface {
             }
         }
 
-        $users = $event->getRequest()->getUsers();
+        if ($event->hasArgument('users')) {
+            $users = $event->getArgument('users');
+        } else {
+            $users = $event->getRequest()->getUsers();
+        }
+
         $response = $event->getResponse();
         $database = $event->getDatabase();
 
@@ -288,7 +293,7 @@ class DatabaseOperations implements ListenerInterface {
         $database = $event->getDatabase();
 
         $numImages = $database->getNumImages($user);
-        $lastModified = $database->getLastModified($user);
+        $lastModified = $database->getLastModified([$user]);
 
         $userModel = new Model\User();
         $userModel->setUserId($user)
