@@ -10,7 +10,8 @@
 
 namespace Imbo\Auth\AccessControl\Adapter;
 
-use Imbo\Exception\InvalidArgumentException,
+use Imbo\Exception\DatabaseException,
+    Imbo\Exception\InvalidArgumentException,
     Imbo\Exception\RuntimeException,
     Imbo\Auth\AccessControl\UserQuery,
     Imbo\Auth\AccessControl\GroupQuery,
@@ -145,8 +146,13 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
         $accessList = $this->getAccessListForPublicKey($publicKey);
 
         foreach ($accessList as $acl) {
+            // If the group specified has not been defined, throw an exception to help the user
+            if (!isset($acl['users'])) {
+                throw new InvalidArgumentException('Missing property "users" in access rule');
+            }
+
             // If a user is specified, ensure the public key has access to the user
-            $userAccess = !$user || isset($acl['users']) && in_array($user, $acl['users']);
+            $userAccess = !$user || $acl['users'] === '*' || in_array($user, $acl['users']);
             if (!$userAccess) {
                 continue;
             }
