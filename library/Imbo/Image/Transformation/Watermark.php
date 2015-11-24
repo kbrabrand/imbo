@@ -12,8 +12,6 @@ namespace Imbo\Image\Transformation;
 
 use Imbo\Exception\StorageException,
     Imbo\Exception\TransformationException,
-    Imbo\EventListener\ListenerInterface,
-    Imbo\EventManager\EventInterface,
     Imagick,
     ImagickException;
 
@@ -23,7 +21,7 @@ use Imbo\Exception\StorageException,
  * @author Espen Hovlandsdal <espen@hovlandsdal.com>
  * @package Image\Transformations
  */
-class Watermark extends Transformation implements ListenerInterface {
+class Watermark extends Transformation {
     /**
      * Default image identifier to use for watermarks
      *
@@ -72,27 +70,14 @@ class Watermark extends Transformation implements ListenerInterface {
     /**
      * {@inheritdoc}
      */
-    public static function getSubscribedEvents() {
-        return [
-            'image.transformation.watermark' => 'transform',
-        ];
-    }
-
-    /**
-     * Transform the image
-     *
-     * @param EventInterface $event The event instance
-     */
-    public function transform(EventInterface $event) {
-        $image = $event->getArgument('image');
-        $params = $event->getArgument('params');
-
+    public function transform(array $params) {
         $width = !empty($params['width']) ? (int) $params['width'] : 0;
         $height = !empty($params['height']) ? (int) $params['height'] : 0;
         $imageIdentifier = !empty($params['img']) ? $params['img'] : $this->defaultImage;
         $position = !empty($params['position']) ? $params['position'] : $this->position;
         $x = !empty($params['x']) ? (int) $params['x'] : $this->x;
         $y = !empty($params['y']) ? (int) $params['y'] : $this->y;
+        $image = $this->image;
 
         if (empty($imageIdentifier)) {
             throw new TransformationException(
@@ -103,8 +88,8 @@ class Watermark extends Transformation implements ListenerInterface {
 
         // Try to load watermark image from storage
         try {
-            $watermarkData = $event->getStorage()->getImage(
-                $event->getRequest()->getUser(),
+            $watermarkData = $this->event->getStorage()->getImage(
+                $this->event->getRequest()->getUser(),
                 $imageIdentifier
             );
 

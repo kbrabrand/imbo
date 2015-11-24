@@ -64,6 +64,13 @@ class Event extends GenericEvent implements EventInterface {
     /**
      * {@inheritdoc}
      */
+    public function getTransformationManager() {
+        return $this->getArgument('transformationManager');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getConfig() {
         return $this->getArgument('config');
     }
