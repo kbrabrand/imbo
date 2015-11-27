@@ -26,6 +26,7 @@ class ImagickTest extends ListenerTests {
     private $request;
     private $response;
     private $event;
+    private $transformationManager;
 
     /**
      * Set up the listener
@@ -33,9 +34,11 @@ class ImagickTest extends ListenerTests {
     public function setUp() {
         $this->request = $this->getMock('Imbo\Http\Request\Request');
         $this->response = $this->getMock('Imbo\Http\Response\Response');
+        $this->transformationManager = $this->getMock('Imbo\Image\TransformationManager');
         $this->event = $this->getMock('Imbo\EventManager\Event');
         $this->event->expects($this->any())->method('getRequest')->will($this->returnValue($this->request));
         $this->event->expects($this->any())->method('getResponse')->will($this->returnValue($this->response));
+        $this->event->expects($this->any())->method('getTransformationManager')->will($this->returnValue($this->transformationManager));
 
         $this->listener = new Imagick();
     }
