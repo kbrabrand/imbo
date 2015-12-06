@@ -12,6 +12,7 @@ namespace Imbo\Image\Transformation;
 
 use Imbo\Model\Image,
     Imbo\Image\RegionExtractor,
+    Imbo\Image\InputSizeConstraint,
     Imbo\Exception\TransformationException,
     ImagickException;
 
@@ -21,7 +22,7 @@ use Imbo\Model\Image,
  * @author Christer Edvartsen <cogo@starzinger.net>
  * @package Image\Transformations
  */
-class Crop extends Transformation implements RegionExtractor {
+class Crop extends Transformation implements RegionExtractor, InputSizeConstraint {
     /**
      * X coordinate of the top left corner of the crop
      *
@@ -120,5 +121,25 @@ class Crop extends Transformation implements RegionExtractor {
             'x' => $x,
             'y' => $y
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMinimumInputSize(array $params, array $imageSize) {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function adjustParameters($ratio, array $parameters) {
+        foreach (['x', 'y', 'width', 'height'] as $param) {
+            if (isset($parameters[$param])) {
+                $parameters[$param] = round($parameters[$param] / $ratio);
+            }
+        }
+
+        return $parameters;
     }
 }
