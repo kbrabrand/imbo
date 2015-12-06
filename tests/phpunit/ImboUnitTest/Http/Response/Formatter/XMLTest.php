@@ -84,6 +84,28 @@ class XMLTest extends \PHPUnit_Framework_TestCase {
     }
 
     /**
+     * @covers Imbo\Http\Response\Formatter\Formatter::format
+     * @covers Imbo\Http\Response\Formatter\XML::formatError
+     */
+    public function testCanFormatAnErrorModelWithIllegalXmlChars() {
+        $formattedDate = 'Wed, 30 Jan 2013 10:53:11 GMT';
+        $date = new DateTime($formattedDate);
+
+        $model = $this->getMock('Imbo\Model\Error');
+        $model->expects($this->once())->method('getHttpCode')->will($this->returnValue(404));
+        $model->expects($this->once())->method('getErrorMessage')->will($this->returnValue('Expect <foo> and <bar>'));
+        $model->expects($this->once())->method('getDate')->will($this->returnValue($date));
+        $model->expects($this->once())->method('getImboErrorCode')->will($this->returnValue(100));
+        $model->expects($this->once())->method('getImageIdentifier')->will($this->returnValue('identifier'));
+
+        $this->dateFormatter->expects($this->once())->method('formatDate')->with($date)->will($this->returnValue($formattedDate));
+
+        $xml = $this->formatter->format($model);
+
+        $this->assertContains('<message><![CDATA[Expect <foo> and <bar>]]></message>', $xml);
+    }
+
+    /**
      * @covers Imbo\Http\Response\Formatter\XML::formatError
      */
     public function testCanFormatAnErrorModelWhenNoImageIdentifierExists() {
