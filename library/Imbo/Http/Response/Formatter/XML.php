@@ -41,7 +41,7 @@ class XML extends Formatter implements FormatterInterface {
 <imbo>
   <error>
     <code>{$model->getHttpCode()}</code>
-    <message>{$model->getErrorMessage()}</message>
+    <message>{$this->formatValue($model->getErrorMessage())}</message>
     <date>{$this->dateFormatter->formatDate($model->getDate())}</date>
     <imboErrorCode>{$model->getImboErrorCode()}</imboErrorCode>
   </error>
