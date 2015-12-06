@@ -60,7 +60,7 @@ Feature: Imbo provides an event listener that generates variations when adding i
         And I include an access token in the query
         When I request the previously added image as a "png"
         Then I should get a response with "200 OK"
-        And the "X-Imbo-ImageVariation" response header matches "512x128"
+        And the "X-Imbo-ImageVariation" response header matches "128x32"
         And the width of the image is "50"
 
     Scenario: Request an image with a maxSize and crop transformation
