@@ -22,7 +22,7 @@ use Imbo\Image\RegionExtractor,
  * @author Kristoffer Brabrand <kristoffer@brabrand.no>
  * @package Image\Transformations
  */
-class SmartSize extends Transformation {
+class SmartSize extends Transformation implements RegionExtractor, InputSizeConstraint {
     /**
      * Holds cached metadata for this image
      *
@@ -57,6 +57,63 @@ class SmartSize extends Transformation {
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function getMinimumInputSize(array $parameters, array $imageSize) {
+        if (isset($parameters['poi'])) {
+            $cropData = $this->calculateCrop($parameters, $imageSize);
+
+            $scale = $cropData['width'] / $parameters['width'];
+
+            return [
+                'width' => $imageSize['width'] / $scale,
+                'height' => $imageSize['height'] / $scale
+            ];
+        }
+
+        $transformationManager = $this->transformationManager;
+        $maxSize = $transformationManager->getTransformation('maxSize');
+
+        return $maxSize->getOutputSize(
+            $this->calculateSimpleMaxSize($parameters, $imageSize),
+            $imageSize
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getExtractedRegion(array $parameters, array $imageSize) {
+        if (isset($parameters['poi'])) {
+            $cropData = $this->calculateCrop($parameters, $imageSize);
+        } else {
+            $cropData = $this->calculateSimpleCrop($parameters, $imageSize);
+        }
+
+        $scale = $cropData['width'] / $parameters['width'];
+
+        return [
+            'width' => $cropData['width'] / $scale,
+            'height' => $cropData['height'] / $scale,
+            'x' => $cropData['x'] / $scale,
+            'y' => $cropData['y'] / $scale
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function adjustParameters($ratio, array $parameters) {
+        foreach (['x', 'y', 'width', 'height'] as $param) {
+            if (isset($parameters[$param])) {
+                $parameters[$param] = round($parameters[$param] / $ratio);
+            }
+        }
+
+        return $parameters;
+    }
+
+    /**
      * Calculate the coordinates and size of the crop area
      *
      * @param array $parameters
@@ -64,6 +121,14 @@ class SmartSize extends Transformation {
      * @return array Crop data
      */
     private function calculateCrop(array $parameters, array $imageSize) {
+        if (is_string($parameters['poi'])) {
+            $parameters['poi'] = explode(',', $parameters['poi']);
+        }
+
+        if (!isset($parameters['closeness']) && isset($parameters['crop'])) {
+            $parameters['closeness'] = $parameters['crop'];
+        }
+
         $focalX = $parameters['poi'][0];
         $focalY  = $parameters['poi'][1];
 
@@ -75,8 +140,10 @@ class SmartSize extends Transformation {
         $targetHeight = $parameters['height'];
         $targetRatio  = $targetWidth / $targetHeight;
 
-        $growFactor = $this->getGrowFactor($parameters['closeness']);
-        $sourcePortionThreshold = $this->getSourcePercentageThreshold($parameters['closeness']);
+        $closeness = isset($parameters['closeness']) ? $parameters['closeness'] : 'medium';
+
+        $growFactor = $this->getGrowFactor($closeness);
+        $sourcePortionThreshold = $this->getSourcePercentageThreshold($closeness);
 
         if ($sourceRatio >= $targetRatio) {
             // Image is wider than needed, crop from the sides
@@ -121,6 +188,57 @@ class SmartSize extends Transformation {
             'x' => $cropLeft,
             'y' => $cropTop,
         ];
+    }
+
+    /**
+     * Calculate the coordinates and size of the crop area
+     *
+     * @param array $parameters
+     * @param array $imageSize
+     * @return array Crop data
+     */
+    private function calculateSimpleCrop(array $parameters, array $imageSize) {
+        $transformationManager = $this->transformationManager;
+
+        $maxSize = $transformationManager->getTransformation('maxSize');
+        $crop = $transformationManager->getTransformation('crop');
+
+        $maxSize->setEvent($this->event);
+        $crop->setEvent($this->event);
+
+        // Calculate max size region
+        $maxSizeRegion = $maxSize->getOutputSize(
+            $this->calculateSimpleMaxSize($parameters, $imageSize),
+            $imageSize
+        );
+
+        // Crop and return the region information
+        return $crop->getExtractedRegion([
+            'width' => $parameters['width'],
+            'height' => $parameters['height'],
+            'mode' => 'center'
+        ], [
+            'width' => $maxSizeRegion['width'],
+            'height' => $maxSizeRegion['height']
+        ]);
+    }
+
+    /**
+     * Get params for max size in simple crop
+     *
+     * @param array $parameters
+     * @param array $imageSize
+     * @return array Crop data
+     */
+    private function calculateSimpleMaxSize(array $parameters, array $imageSize) {
+        $imageRatio = $imageSize['width'] / $imageSize['height'];
+        $cropRatio = $parameters['width'] / $parameters['height'];
+
+        if ($cropRatio > $imageRatio) {
+            return ['width' => $parameters['width']];
+        } else {
+            return ['height' => $parameters['height']];
+        }
     }
 
     /**
@@ -224,21 +342,18 @@ class SmartSize extends Transformation {
      * @param int $height
      */
     private function simpleCrop($width, $height) {
-        $sourceRatio = $this->image->getWidth() / $this->image->getHeight();
-        $cropRatio = $width / $height;
+        $maxSizeParams = $this->calculateSimpleMaxSize([
+            'width' => $width,
+            'height' => $height
+        ], [
+            'width' => $this->image->getWidth(),
+            'height' => $this->image->getHeight()
+        ]);
 
-        $params = [];
-
-        if ($cropRatio > $sourceRatio) {
-            $params['width'] = $width;
-        } else {
-            $params['height'] = $height;
-        }
-
-        $transformationManager = $this->event->getTransformationManager();
+        $transformationManager = $this->transformationManager;
 
         $maxSize = $transformationManager->getTransformation('maxSize');
-        $maxSize->setImage($this->image)->transform($params);
+        $maxSize->setImage($this->image)->transform($maxSizeParams);
 
         $crop = $transformationManager->getTransformation('crop');
         $crop->setImage($this->image)->transform([
@@ -282,7 +397,7 @@ class SmartSize extends Transformation {
             }
         }
 
-        $params['closeness'] = (isset($params['crop']) ? $params['crop'] : 'medium');
+        $params['closeness'] = isset($params['crop']) ? $params['crop'] : 'medium';
         $params['poi'] = $poi;
 
         return $params;

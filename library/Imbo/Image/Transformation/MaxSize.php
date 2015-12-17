@@ -51,6 +51,17 @@ class MaxSize extends Transformation implements InputSizeConstraint {
     }
 
     /**
+     * Get output size. Alias for getMinimumInputSize which returns the output size
+     *
+     * @param array $params
+     * @param array $imageSize
+     * @return array
+     */
+    public function getOutputSize(array $params, array $imageSize) {
+        return $this->getMinimumInputSize($params, $imageSize);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getMinimumInputSize(array $params, array $imageSize) {

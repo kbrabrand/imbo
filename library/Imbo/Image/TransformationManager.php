@@ -204,10 +204,15 @@ class TransformationManager implements ListenerInterface {
         $flipDimensions = false;
         $minimum = ['width' => $image->getWidth(), 'height' => $image->getHeight(), 'index' => 0];
         $inputSize = ['width' => $image->getWidth(), 'height' => $image->getHeight()];
+
         foreach ($transformations as $i => $transformation) {
             $params = $transformation['params'];
 
             $handler = $this->getTransformation($transformation['name']);
+
+            if ($handler) {
+                $handler->setEvent($event);
+            }
 
             // Some transformations, such as `crop`, will return a region of the input image.
             // In some cases, we'll need the full size of the image to extract this properly,
@@ -282,6 +287,15 @@ class TransformationManager implements ListenerInterface {
                 'index'  => $minimum['index'],
             ];
         }
+
+        //echo '<pre>' . print_r([
+        //    'minimum' => $minimum,
+        //    'region' => $region,
+        //    'size' => [
+        //        'width' => $image->getWidth(),
+        //        'height' => $image->getHeight()
+        //    ]
+        //], true);die;
 
         // Return false if the input size is larger than the original
         $widerThanOriginal = $minimum['width'] >= $image->getWidth();

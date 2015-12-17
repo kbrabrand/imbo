@@ -159,4 +159,40 @@ class TransformationManagerTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame(654, $minimum['width']);
         $this->assertSame(368, $minimum['height']);
     }
+
+    public function smartSizeArgumentProvider() {
+        return [
+            'Square, medium crop, (500,500) poi on square image' => [
+                ['smartSize:width=400,height=400,poi=500,500,crop=medium'],
+                ['width' => 600, 'height' => 600, 'x' => 200, 'y' => 200]
+            ],
+            //'Square, close crop, no poi on square image' => [
+            //    ['smartSize:width=400,height=400,crop=close'],
+            //    ['width' => 711, 'height' => 400, 'x' => 0, 'y' => 0]
+            //],
+            //'Landscape, close crop, no poi on square image' => [
+            //    ['smartSize:width=300,height=600,crop=close'],
+            //    ['width' => 1067, 'height' => 601, 'x' => 0, 'y' => 0]
+            //],
+            //'Portrait, close crop, no poi on square image' => [
+            //    ['smartSize:width=700,height=400,crop=close'],
+            //    ['width' => 711, 'height' => 400, 'x' => 0, 'y' => 0]
+            //]
+        ];
+    }
+
+    /**
+     * @covers Imbo\Image\TransformationManager::getExtractedRegion
+     * @dataProvider smartSizeArgumentProvider
+     *
+     */
+    public function testSmartSizeReturnsCorrectMinimumInputSize($transformations, $expected) {
+        $this->query->set('t', $transformations);
+        $minimum = $this->manager->getMinimumImageInputSize($this->event);
+
+        var_dump($minimum);
+
+        $this->assertSame($expected['width'], $minimum['width']);
+        $this->assertSame($expected['height'], $minimum['height']);
+    }
 }
