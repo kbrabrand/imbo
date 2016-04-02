@@ -67,6 +67,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('insert')
             ->with(['publicKey' => 'public', 'privateKey' => 'private', 'acl' => []])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->addKeyPair('public', 'private');
     }
 
@@ -81,6 +82,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('remove')
             ->with(['publicKey' => 'public'])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->deletePublicKey('public');
     }
 
@@ -95,6 +97,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('update')
             ->with(['publicKey' => 'public'], ['$set' => ['privateKey' => 'private']])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->updatePrivateKey('public', 'private');
     }
 
@@ -109,6 +112,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('update')
             ->with(['publicKey' => 'public'], $this->isType('array'))
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->addAccessRule('public', []);
     }
 
@@ -123,6 +127,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('update')
             ->with(['publicKey' => 'public'], $this->isType('array'))
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->deleteAccessRule('public', '49a7011a05c677b9a916612a');
     }
 
@@ -137,6 +142,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('insert')
             ->with(['name' => 'name', 'resources' => []])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->addResourceGroup('name', []);
     }
 
@@ -151,6 +157,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('update')
             ->with(['name' => 'name'], ['$set' => ['resources' => []]])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->updateResourceGroup('name', []);
     }
 
@@ -165,6 +172,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
             ->method('remove')
             ->with(['name' => 'name'])
             ->will($this->throwException(new MongoException()));
+
         $this->adapter->deleteResourceGroup('name');
     }
 
@@ -196,11 +204,13 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
      */
     public function testThrowsExceptionWhenNotAbleToGetAclCollection() {
         $adapter = new MongoDB(['databaseName' => 'somename'], $this->client);
+
         $this->client
             ->expects($this->once())
             ->method('selectCollection')
             ->with('somename', 'accesscontrol')
             ->will($this->throwException(new MongoException()));
+
         $adapter->addKeyPair('public', 'private');
     }
 
@@ -211,11 +221,13 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
      */
     public function testThrowsExceptionWhenNotAbleToGetAclGroupCollection() {
         $adapter = new MongoDB(['databaseName' => 'somename'], $this->client);
+
         $this->client
             ->expects($this->once())
             ->method('selectCollection')
             ->with('somename', 'accesscontrolgroup')
             ->will($this->throwException(new MongoException()));
+
         $adapter->groupExists('name');
     }
 
@@ -228,6 +240,7 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         $adapter = new MongoDB([
             'server' => 'foobar',
         ]);
+
         $adapter->getGroup('name');
     }
 }

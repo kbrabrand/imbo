@@ -90,8 +90,6 @@ class SmartSize extends Transformation implements RegionExtractor, InputSizeCons
 
             $scale = $cropData['width'] / $parameters['width'];
 
-            print_r($cropData);die;
-
             return $this->calculateCrop($parameters, $imageSize);
         }
 
