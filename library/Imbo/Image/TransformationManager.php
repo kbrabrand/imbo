@@ -301,6 +301,15 @@ class TransformationManager implements ListenerInterface {
         $widerThanOriginal = $minimum['width'] >= $image->getWidth();
         $higherThanOriginal = $minimum['height'] >= $image->getHeight();
         if ($widerThanOriginal || $higherThanOriginal) {
+            echo '<pre>' . print_r([
+                'minimum' => $minimum,
+                'region' => $region,
+                'size' => [
+                    'width' => $image->getWidth(),
+                    'height' => $image->getHeight()
+                ]
+            ], true);die;
+
             return false;
         }
 

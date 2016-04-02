@@ -321,9 +321,9 @@ $config = [
      * @var array
      */
     'eventListeners' => [
-        'accessControl' => 'Imbo\EventListener\AccessControl',
-        'accessToken' => 'Imbo\EventListener\AccessToken',
-        'auth' => 'Imbo\EventListener\Authenticate',
+        'accessControl' => null,//'Imbo\EventListener\AccessControl',
+        'accessToken' => null,//'Imbo\EventListener\AccessToken',
+        'auth' => null,//'Imbo\EventListener\Authenticate',
         'statsAccess' => [
             'listener' => 'Imbo\EventListener\StatsAccess',
             'params' => [

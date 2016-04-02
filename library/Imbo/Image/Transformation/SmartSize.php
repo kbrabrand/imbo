@@ -49,6 +49,7 @@ class SmartSize extends Transformation implements RegionExtractor, InputSizeCons
 
         try {
             $this->imagick->cropImage($crop['width'], $crop['height'], $crop['x'], $crop['y']);
+
             $this->imagick->setImagePage(0, 0, 0, 0);
             $this->resize($params['width'], $params['height']);
         } catch (ImagickException $e) {
@@ -86,18 +87,15 @@ class SmartSize extends Transformation implements RegionExtractor, InputSizeCons
     public function getExtractedRegion(array $parameters, array $imageSize) {
         if (isset($parameters['poi'])) {
             $cropData = $this->calculateCrop($parameters, $imageSize);
-        } else {
-            $cropData = $this->calculateSimpleCrop($parameters, $imageSize);
+
+            $scale = $cropData['width'] / $parameters['width'];
+
+            print_r($cropData);die;
+
+            return $this->calculateCrop($parameters, $imageSize);
         }
 
-        $scale = $cropData['width'] / $parameters['width'];
-
-        return [
-            'width' => $cropData['width'] / $scale,
-            'height' => $cropData['height'] / $scale,
-            'x' => $cropData['x'] / $scale,
-            'y' => $cropData['y'] / $scale
-        ];
+        return $this->calculateSimpleCrop($parameters, $imageSize);
     }
 
     /**
@@ -108,6 +106,12 @@ class SmartSize extends Transformation implements RegionExtractor, InputSizeCons
             if (isset($parameters[$param])) {
                 $parameters[$param] = round($parameters[$param] / $ratio);
             }
+        }
+
+        if (isset($parameters['poi'])) {
+            list($poiX, $poiY) = explode(',', $parameters['poi']);
+
+            $parameters['poi'] = $poiX / $ratio . ',' . $poiY / $ratio;
         }
 
         return $parameters;
