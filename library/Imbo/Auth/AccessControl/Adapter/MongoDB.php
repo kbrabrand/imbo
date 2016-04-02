@@ -11,8 +11,6 @@
 namespace Imbo\Auth\AccessControl\Adapter;
 
 use Imbo\Exception\DatabaseException,
-    Imbo\Exception\InvalidArgumentException,
-    Imbo\Exception\RuntimeException,
     Imbo\Auth\AccessControl\GroupQuery,
     Imbo\Model\Groups as GroupsModel,
     MongoClient,
@@ -90,9 +88,10 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
      *
      * @param array $params Parameters for the driver
      * @param MongoClient $client MongoClient instance
-     * @param MongoCollection $collection MongoCollection instance for the image variation collection
+     * @param MongoCollection $aclCollection MongoCollection instance for the acl collection
+     * @param MongoCollection $aclGrouplection MongoCollection instance for the acl group collection
      */
-    public function __construct(array $params = null, MongoClient $client = null, MongoCollection $collection = null) {
+    public function __construct(array $params = null, MongoClient $client = null, MongoCollection $aclCollection = null, MongoCollection $aclGroupCollection = null) {
         if ($params !== null) {
             $this->params = array_replace_recursive($this->params, $params);
         }
@@ -101,42 +100,13 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
             $this->mongoClient = $client;
         }
 
-        if ($collection !== null) {
-            $this->collection = $collection;
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getUsersForResource($publicKey, $resource) {
-        if (!$publicKey || !$resource) {
-            return [];
+        if ($aclCollection !== null) {
+            $this->aclCollection = $aclCollection;
         }
 
-        $accessList = $this->getAccessListForPublicKey($publicKey);
-
-        // Get all user lists
-        $userLists = array_filter(array_map(function($acl) {
-            return isset($acl['users']) ? $acl['users'] : false;
-        }, $accessList));
-
-        // Merge user lists
-        $users = call_user_func_array('array_merge', $userLists);
-
-        // Check if public key has access to user with same name
-        if ($this->hasAccess($publicKey, $resource, $publicKey)) {
-            $userList[] = $publicKey;
+        if ($aclGroupCollection !== null) {
+            $this->aclGroupCollection = $aclGroupCollection;
         }
-
-        // Check for each user specified in acls
-        foreach ($users as $user) {
-            if ($this->hasAccess($publicKey, $resource, $user)) {
-                $userList[] = $user;
-            }
-        }
-
-        return $userList;
     }
 
     /**
@@ -164,6 +134,15 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
         $model->setHits($cursor->count());
 
         return $groups;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function groupExists($groupName) {
+        return (boolean) $this->getGroupsCollection()->findOne([
+            'name' => $groupName
+        ]);
     }
 
     /**
@@ -226,6 +205,8 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
                 'publicKey' => $publicKey
             ]);
 
+            unset($this->publicKeys[$publicKey]);
+
             return (bool) $result['ok'];
 
         } catch (MongoException $e) {
@@ -243,7 +224,9 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
                 ['$set' => ['privateKey' => $privateKey]]
             );
 
-            return (bool) $result['ok'];
+            unset($this->publicKeys[$publicKey]);
+
+            return (bool) $result['updatedExisting'];
 
         } catch (MongoException $e) {
             throw new DatabaseException('Could not update key in database', 500, $e);
@@ -254,7 +237,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
      * {@inheritdoc}
      */
     public function getAccessRule($publicKey, $accessId) {
-        $rules = $this->getAccessListForPublicKey($publicKey);
+        $rules = $this->getAccessListForPublicKey($publicKey) ?: [];
 
         foreach ($rules as $rule) {
             if ($rule['id'] == $accessId) {
@@ -273,13 +256,12 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
             $result = $this->getAclCollection()->update(
                 ['publicKey' => $publicKey],
                 ['$push' => ['acl' => array_merge(
-                    ['id' => new MongoId()],
+                    ['id' => $id = new MongoId()],
                     $accessRule
                 )]]
             );
 
-            return (bool) $result['ok'];
-
+            return (string) $id;
         } catch (MongoException $e) {
             throw new DatabaseException('Could not update rule in database', 500, $e);
         }
@@ -303,7 +285,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
 
             return (bool) $result['ok'];
         } catch (MongoException $e) {
-            throw new DatabaseException('Could not delete rule from in database', 500, $e);
+            throw new DatabaseException('Could not delete rule from database', 500, $e);
         }
     }
 
@@ -316,6 +298,8 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
                 'name' => $groupName,
                 'resources' => $resources,
             ]);
+
+            return true;
         } catch (MongoException $e) {
             throw new DatabaseException('Could not add resource group to database', 500, $e);
         }
@@ -331,6 +315,9 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
             ], [
                 '$set' => ['resources' => $resources],
             ]);
+
+            // Remove from local cache
+            unset($this->groups[$groupName]);
         } catch (MongoException $e) {
             throw new DatabaseException('Could not update resource group in database', 500, $e);
         }
@@ -341,11 +328,14 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
      */
     public function deleteResourceGroup($groupName) {
         try {
-            $success = (bool) $this->getGroupsCollection()->remove([
+            $result = $this->getGroupsCollection()->remove([
                 'name' => $groupName,
-            ])['ok'];
+            ]);
 
-            if ($success) {
+            if ($result['ok']) {
+                // Remove from local cache
+                unset($this->groups[$groupName]);
+
                 // Also remove ACL rules that depended on this group
                 $this->getAclCollection()->update(
                     ['acl.group' => $groupName],
@@ -360,7 +350,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
                 );
             }
 
-            return $success;
+            return (boolean) $result['n'];
         } catch (MongoException $e) {
             throw new DatabaseException('Could not delete resource group from database', 500, $e);
         }
@@ -388,8 +378,6 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface {
 
             return $info;
         }, $info['acl']);
-
-        return $info['acl'];
     }
 
     /**

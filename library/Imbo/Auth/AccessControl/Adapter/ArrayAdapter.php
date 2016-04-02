@@ -53,39 +53,8 @@ class ArrayAdapter extends AbstractAdapter implements AdapterInterface {
         $this->accessList = $accessList;
         $this->groups = $groups;
         $this->keys = $this->getKeysFromAcl();
-    }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getUsersForResource($publicKey, $resource) {
-        if (!$publicKey || !$resource) {
-            return [];
-        }
-
-        $accessList = $this->getAccessListForPublicKey($publicKey);
-
-        // Get all user lists
-        $userLists = array_filter(array_map(function($acl) {
-            return isset($acl['users']) ? $acl['users'] : false;
-        }, $accessList));
-
-        // Merge user lists
-        $users = call_user_func_array('array_merge', $userLists);
-
-        // Check if public key has access to user with same name
-        if ($this->hasAccess($publicKey, $resource, $publicKey)) {
-            $userList[] = $publicKey;
-        }
-
-        // Check for each user specified in acls
-        foreach ($users as $user) {
-            if ($this->hasAccess($publicKey, $resource, $user)) {
-                $userList[] = $user;
-            }
-        }
-
-        return $userList;
+        $this->validateAccessList();
     }
 
     /**
@@ -100,6 +69,13 @@ class ArrayAdapter extends AbstractAdapter implements AdapterInterface {
 
         $offset = ($query->page() - 1) * $query->limit();
         return array_slice($this->groups, $offset, $query->limit(), true);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function groupExists($groupName) {
+        return isset($this->groups[$groupName]);
     }
 
     /**
@@ -173,5 +149,26 @@ class ArrayAdapter extends AbstractAdapter implements AdapterInterface {
         }
 
         return $keys;
+    }
+
+    /**
+     * Validate access list data
+     *
+     * @throws InvalidArgumentException
+     */
+    private function validateAccessList() {
+        // Get all user lists
+        $declaredPublicKeys = array_map(function($acl) {
+            return $acl['publicKey'];
+        }, $this->accessList);
+
+        $publicKeys = [];
+        foreach ($declaredPublicKeys as $key) {
+            if (in_array($key, $publicKeys)) {
+                throw new InvalidArgumentException('Public key declared twice in config: ' . $key, 500);
+            }
+
+            $publicKeys[] = $key;
+        }
     }
 }

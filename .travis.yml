@@ -3,6 +3,10 @@ php:
   - 5.4
   - 5.5
   - 5.6
+  - 7.0
+matrix:
+  allow_failures:
+    - php: 7.0
 notifications:
   irc:
     use_notice: true
@@ -20,6 +24,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get -y --reinstall install imagemagick
   - printf "\n" | pecl install --force mongo
+  - printf "\n" | pecl install --force mongodb
   - printf "\n" | pecl install --force memcached-2.2.0
   - printf "\n" | pecl install apcu-4.0.10
   - printf "\n" | pecl install imagick-3.4.0RC2

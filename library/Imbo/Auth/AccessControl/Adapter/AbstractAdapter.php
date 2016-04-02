@@ -30,6 +30,11 @@ abstract class AbstractAdapter implements AdapterInterface {
     /**
      * {@inheritdoc}
      */
+    abstract public function groupExists($groupName);
+
+    /**
+     * {@inheritdoc}
+     */
     abstract public function getGroup($groupName);
 
     /**
@@ -71,5 +76,38 @@ abstract class AbstractAdapter implements AdapterInterface {
         }
 
         return false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getUsersForResource($publicKey, $resource) {
+        if (!$publicKey || !$resource) {
+            return [];
+        }
+
+        $accessList = $this->getAccessListForPublicKey($publicKey);
+
+        // Get all user lists
+        $userLists = array_filter(array_map(function($acl) {
+            return isset($acl['users']) ? $acl['users'] : false;
+        }, $accessList));
+
+        // Merge user lists
+        $users = call_user_func_array('array_merge', $userLists);
+
+        // Check if public key has access to user with same name
+        if ($this->hasAccess($publicKey, $resource, $publicKey)) {
+            $userList[] = $publicKey;
+        }
+
+        // Check for each user specified in acls
+        foreach ($users as $user) {
+            if ($this->hasAccess($publicKey, $resource, $user)) {
+                $userList[] = $user;
+            }
+        }
+
+        return $userList;
     }
 }

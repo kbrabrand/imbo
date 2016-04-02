@@ -190,8 +190,6 @@ class TransformationManagerTest extends \PHPUnit_Framework_TestCase {
         $this->query->set('t', $transformations);
         $minimum = $this->manager->getMinimumImageInputSize($this->event);
 
-        var_dump($minimum);
-
         $this->assertSame($expected['width'], $minimum['width']);
         $this->assertSame($expected['height'], $minimum['height']);
     }

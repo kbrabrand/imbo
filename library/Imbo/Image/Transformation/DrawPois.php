@@ -12,9 +12,7 @@ namespace Imbo\Image\Transformation;
 
 use Imbo\Exception\TransformationException,
     Imagick,
-    ImagickPixel,
     ImagickException,
-    ImagickPixelException,
     ImagickDraw;
 
 /**
