@@ -406,44 +406,4 @@ class SmartSize extends Transformation implements RegionExtractor, InputSizeCons
 
         return $params;
     }
-
-    /**
-     * Validate parameters and return a normalized parameter array
-     *
-     * @param array $params
-     * @return array
-     * @throws TransformationException Thrown on invalid or missing parameters
-     */
-    private function validateParameters(array $params) {
-        if (empty($params['width']) || empty($params['height'])) {
-            throw new TransformationException('Both width and height needs to be specified', 400);
-        }
-
-        // Get POI from transformation params
-        $poi = empty($params['poi']) ? null : explode(',', $params['poi']);
-
-        // Check if we have the POI in metadata
-        if (!$poi) {
-            $metadataPoi = $this->getPoiFromMetadata();
-
-            if ($metadataPoi) {
-                $poi = $metadataPoi;
-            }
-        }
-
-        if ($poi) {
-            if (!isset($poi[0]) || !isset($poi[1])) {
-                throw new TransformationException('Invalid POI format, expected format `<x>,<y>`', 400);
-            }
-
-            if (!empty($params['crop']) && in_array($params['crop'], ['close', 'medium', 'wide']) === false) {
-                throw new TransformationException('Invalid crop value. Valid values are: close,medium,wide', 400);
-            }
-        }
-
-        $params['closeness'] = (isset($params['crop']) ? $params['crop'] : 'medium');
-        $params['poi'] = $poi;
-
-        return $params;
-    }
 }
