@@ -133,6 +133,8 @@ class TransformationManager implements ListenerInterface {
 
         $this->handlers[$name] = $transformation;
 
+        $this->handlers[$name]->setTransformationManager($this);
+
         return $this->handlers[$name];
     }
 

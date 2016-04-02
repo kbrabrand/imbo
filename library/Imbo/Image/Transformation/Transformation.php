@@ -12,6 +12,7 @@ namespace Imbo\Image\Transformation;
 
 use Imagick,
     Imbo\Model\Image,
+    Imbo\Image\TransformationManager,
     Imbo\EventManager\Event,
     Imbo\EventListener\ListenerInterface,
     Imbo\EventManager\EventInterface;
@@ -36,6 +37,13 @@ abstract class Transformation implements ListenerInterface {
      * @var Event
      */
     protected $event;
+
+    /**
+     * Transformation manager that manages this transformation
+     *
+     * @var TransformationManager
+     */
+    protected $transformationManager;
 
     /**
      * Set the Imagick instance
@@ -69,6 +77,18 @@ abstract class Transformation implements ListenerInterface {
      */
     public function setEvent(Event $event) {
         $this->event = $event;
+
+        return $this;
+    }
+
+    /**
+     * Set the transformation manager instance
+     *
+     * @param TransformationManager $manager A TransformationManager instance
+     * @return self
+     */
+    public function setTransformationManager(TransformationManager $manager) {
+        $this->transformationManager = $manager;
 
         return $this;
     }
