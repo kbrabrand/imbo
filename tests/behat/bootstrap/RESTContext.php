@@ -508,6 +508,9 @@ class RESTContext extends BehatContext {
                             $router,
                             $httpdLog);
 
+
+        echo $command;die;
+
         $output = [];
         exec($command, $output);
 

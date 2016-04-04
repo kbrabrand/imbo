@@ -51,7 +51,7 @@ class MaxSize extends Transformation implements InputSizeConstraint {
     }
 
     /**
-     * Get output size. Alias for getMinimumInputSize which returns the output size
+     * Return the dimensions of the resized image
      *
      * @param array $params
      * @param array $imageSize

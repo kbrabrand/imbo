@@ -13,6 +13,12 @@ use Imbo\Auth\AccessControl\Adapter\ArrayAdapter,
 
 // Default config for testing
 $testConfig = [
+    'eventListeners' => [
+        'accessControl' => null,
+        'accessToken' => null,
+        'auth' => null
+    ],
+
     'accessControl' => function() {
         return new ArrayAdapter([
             [
